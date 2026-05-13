@@ -1,6 +1,6 @@
 # Geordin Zolliecoffer — Portfolio Handoff
 
-**Last updated:** 2026-05-13 (v2 — mobile redesign shipped)
+**Last updated:** 2026-05-13 (v3 — production launched at https://geordinzolliecoffer.com via Vercel)
 
 Comprehensive handoff for the Geordin Zolliecoffer visual merchandising portfolio site. Hand this file to a fresh Claude session and they should be able to make changes, deploy, and explain the system without re-reading the build history.
 
@@ -622,20 +622,36 @@ The pre-redesign image stays around indefinitely unless explicitly removed (`doc
 
 ## 20. Post-launch follow-ups
 
-Open items deferred from Gate 9. The first one landed during Phase 3 (Vercel prep); the second is still open.
-
 1. ~~**Hero image `fetchpriority="high"`**~~ — **Done.** Added to both desktop and mobile case-study hero `<LightboxImage>` in `src/pages/CaseStudy.tsx`. Implemented via JSX spread (`{...{ fetchpriority: 'high' }}`) so the attribute lands as lowercase `fetchpriority` in the DOM — React 18.3.1 accepts that without warning; the camelCase form (`fetchPriority`) triggers a "React does not recognize" dev warning. Verified in DOM (`fetchpriority="high"` on the hero image) and via console-error interceptor (zero new warnings post-render).
-2. **Re-run Lighthouse on the real CDN** — Still open. Current numbers are against homelab nginx through Tailscale, which inflates both LCP and SI vs. what real users on Vercel will see. Run a fresh Lighthouse mobile audit on `/` and `/work/kith-west-hollywood` once `geordinzolliecoffer.com` resolves to Vercel and capture the real numbers in §21.
+2. **Re-run Lighthouse on the real CDN** — **Still open.** Site is now live at `https://geordinzolliecoffer.com` via Vercel + Cloudflare DNS. Run a fresh Lighthouse mobile audit on `/` and `/work/kith-west-hollywood` against the production URL (not homelab) and capture the real numbers below. Homelab figures (LCP 4.9–18.7 s) were inflated by Tailscale RTT + simulated throttling; Vercel-edge numbers should be materially better.
+3. **BFG cleanup of large videos in deep git history** — **Open.** When pushing the redesign to the new `geordin-portfolio` repo, GitHub flagged five `.mp4` files under `public/videos/` exceeding the 50 MB recommended limit:
+   - `public/videos/teeccino-social-ep0.mp4` (98 MB)
+   - `public/videos/joseph-abboud-correct.mp4` (82 MB)
+   - `public/videos/teeccino-1.mp4` (81 MB)
+   - `public/videos/lotto-us-walk.mp4` (62 MB)
+   - `public/videos/lotto-us-lifestyle.mp4` (61 MB)
+
+   These are template artifacts from createdbybc.com's pre-redesign era (commits before `a9e3866`). They are NOT in the current working tree, NOT served by the Geordin build (no code references them), and `public/videos/` is gitignored going forward. But they still live in the git history of the new repo, inflating clone size (~380 MB across all 5) and Vercel build durations. A `git filter-repo` or BFG Repo-Cleaner run could strip them from history with one rewrite. Defer until/unless clone time becomes a real friction point — the videos don't ship to production via Vercel's build (only `dist/` is published).
 
 ---
 
-## 21. Production deployment (Vercel)
+## 21. Production deployment (Vercel) — ✅ SHIPPED
 
-**Current state:** repo is Vercel-ready as of Phase 3. Domain wiring and Vercel dashboard setup happen outside the repo — those are browser steps with Geordin's registrar and the Vercel account.
+**Live at https://geordinzolliecoffer.com** as of 2026-05-13.
+
+| Field | Value |
+|---|---|
+| Production URL | `https://geordinzolliecoffer.com` |
+| Vercel project | `geordin-portfolio` |
+| Git repository | `https://github.com/brendonjcarbullido-gif/geordin-portfolio.git` (referred to locally as the `geordin` remote — see §22) |
+| DNS | Cloudflare |
+| Email forwarding | Cloudflare Email Routing → `geordi.z@gmail.com` |
+| Vercel-prep commit | `02a90cf chore: prepare repo for Vercel deployment` |
+| Launch HEAD | `29f707f chore: trigger Vercel rebuild` (favicon update `8c0f529` immediately preceded; merged forward via the Vercel dashboard auto-deploy) |
 
 **Roles:**
 - **Homelab (`http://homelab:8080`)** — dev/staging environment. Stays as-is. Used for iterative development, Tailscale-shared testing, and the rollback target (`geordin-portfolio-portfolio:pre-redesign` image preserved on the box). Container restart cmd remains `docker compose up -d --build` from `~/apps/geordin-portfolio/`.
-- **Vercel (`geordinzolliecoffer.com`)** — production. Geordin owns the domain on a non-Cloudflare registrar. Vercel will pull from the connected git remote on push to `main`.
+- **Vercel (`geordinzolliecoffer.com`)** — production. Auto-deploys on push to `main` of the `geordin-portfolio` repo (NOT the legacy `brendon-portfolio-v3` origin — see §22).
 
 **Repo readiness checklist (Phase 3):**
 - `vercel.json` — present at repo root (existed from the forked starter). `framework: 'vite'`, `buildCommand: 'npm run build'`, `outputDirectory: 'dist'`. SPA rewrite uses a negative-lookahead regex so static asset paths (`/images`, `/assets`, `/api`, `/files`, `/videos`, `/fonts`, `/favicon`) are NOT redirected to `index.html` — they're served as static files. Headers section sets `max-age=31536000, immutable` on `/assets/*` (hashed bundles) and 1h on `/files/*`. **Don't simplify this rewrite to a catch-all `/(.*)` → `/index.html`** — that would route every `/images/work/*.webp` request through React, which is broken behavior.
@@ -663,8 +679,45 @@ All 8 paths verified returning 200 from `vite preview`. SPA fallback works (a no
 
 **Open items post-Vercel-launch:**
 - Run Lighthouse mobile audit on `/` and `/work/kith-west-hollywood` against the live `geordinzolliecoffer.com` and update §20 with real numbers.
-- Decide on Cloudflare Email Routing for `hello@geordinzolliecoffer.com` → Geordin's gmail (separate task; HANDOFF §15.1 referenced this).
+- ~~Decide on Cloudflare Email Routing for `hello@geordinzolliecoffer.com` → Geordin's gmail~~ — **Done.** Email forwarding wired via Cloudflare to `geordi.z@gmail.com`.
 - Decide on R2 bucket for media offload (currently all 54 webp files ship in the Vercel deployment; ~20.6 MB total. Tolerable for a 3-project portfolio, but R2 would be cheaper at scale and faster for image-heavy pages).
+
+---
+
+## 22. Repo wiring — read this before any `git push`
+
+**The local working directory has TWO git remotes. They point at TWO DIFFERENT live websites.** Pushing to the wrong one will deploy Geordin's code to a production site that isn't his — this exact mistake happened during launch (see incident below).
+
+```
+geordin   https://github.com/brendonjcarbullido-gif/geordin-portfolio.git    → geordinzolliecoffer.com (THIS site)
+origin    https://github.com/brendonjcarbullido-gif/brendon-portfolio-v3.git → createdbybc.com (Brendon's site)
+```
+
+**Always push with the remote name explicit:**
+
+```bash
+git push geordin main          # ✅ correct — publishes to Geordin's production
+git push origin main           # ❌ NEVER — would re-deploy Geordin's code to createdbybc.com
+```
+
+`origin` is intentionally NOT renamed. Doing `git push` without a remote name will use the configured upstream (currently `origin`) — same bug. Always type `geordin` explicitly. If a future Claude session or contributor edits this repo, they need to know this before their first push.
+
+A safer long-term fix would be to either delete the `origin` remote (`git remote remove origin`) or repoint it (`git remote set-url origin <geordin-url>`). Deferred for now — the explicit-remote-name discipline is intentional documentation that this checkout has a non-standard history. Both options are safe to take later if the discipline becomes friction.
+
+### Incident (2026-05-13)
+
+**What happened.** During Phase 3 (Vercel prep), `git push origin main` was run from this working directory. `origin` pointed at `brendon-portfolio-v3` — the GitHub source for createdbybc.com's Vercel deployment. The push delivered Geordin's 3 redesign commits (`489de21`, `f645d43`, `02a90cf`) to that repo's `main`, which auto-deployed Geordin's site to **createdbybc.com**. createdbybc.com served Geordin's portfolio for several minutes.
+
+**Recovery.**
+1. **createdbybc.com**: rolled back via the Vercel dashboard — Promote-to-Production on the prior deployment at commit `a9e3866` (last known-good createdbybc state). createdbybc auto-deploy was then locked by setting the project's "Ignored Build Step" to `exit 1` to prevent any future accidental push from re-deploying.
+2. **New repo**: created `https://github.com/brendonjcarbullido-gif/geordin-portfolio.git` — empty, dedicated to Geordin. The local working tree was pushed to it via a newly-added `geordin` remote (`git push geordin main`). The full commit history transferred, including the legacy createdbybc commits beneath Geordin's 3.
+3. **Old repo**: force-reset back to `a9e3866` with `git push --force-with-lease origin a9e3866:refs/heads/main`. Geordin's 3 commits are no longer reachable from `origin/main`. The `--force-with-lease` was used (not `--force`) so a concurrent push from someone else would have aborted the surgery — none was present.
+4. **New Vercel project**: created (`geordin-portfolio`), connected to the new repo, deployed Geordin's site at `https://geordinzolliecoffer.com`.
+
+**Lessons.**
+- **Never share a single repo between two production projects.** Vercel will happily auto-deploy any branch push it's watching, even if the commits are for a different site.
+- **Local remotes are stateful and dangerous.** A `git push origin main` six months from now from this same working directory will fire the same misroute unless someone deliberately changes the remote or removes it. The `--force-with-lease` fix is a one-time recovery — it doesn't prevent recurrence. The procedural discipline in §22 is the prevention.
+- **Vercel "Ignored Build Step: exit 1"** is a useful kill-switch on a repo whose auto-deploy you no longer want, but it's not load-bearing here — the prevention is at the git layer.
 
 ---
 
