@@ -1,6 +1,6 @@
 # Geordin Zolliecoffer — Portfolio Handoff
 
-**Last updated:** 2026-05-13 (v2, post mobile redesign)
+**Last updated:** 2026-05-13 (v2 — mobile redesign shipped)
 
 Comprehensive handoff for the Geordin Zolliecoffer visual merchandising portfolio site. Hand this file to a fresh Claude session and they should be able to make changes, deploy, and explain the system without re-reading the build history.
 
@@ -551,6 +551,8 @@ If all five pass, the system is healthy. Open the URL in any browser on any tail
 ---
 
 ## 18. Mobile Redesign — Gate Log
+
+**Status:** Shipped 2026-05-13. Single commit on `main` (`489de21`). Post-merge iPhone smoke test clean. The `mobile-redesign` branch was fast-forwarded into `main` and deleted; no separate branch reference exists anymore.
 
 The mobile-first redesign was executed over 9 gates (+ Gate 5.5 reverted, + Gate 7.5 dedup), each iPhone-validated over Tailscale before moving to the next. Below is the provenance the missing per-gate git commits would otherwise carry.
 
