@@ -669,3 +669,4 @@ All 8 paths verified returning 200 from `vite preview`. SPA fallback works (a no
 ---
 
 **You can now make changes confidently. Welcome to the Geordin portfolio.**
+
