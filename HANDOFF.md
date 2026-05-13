@@ -622,10 +622,49 @@ The pre-redesign image stays around indefinitely unless explicitly removed (`doc
 
 ## 20. Post-launch follow-ups
 
-Open items deferred from Gate 9, to revisit once a domain is wired:
+Open items deferred from Gate 9. The first one landed during Phase 3 (Vercel prep); the second is still open.
 
-1. **Hero image `fetchpriority="high"`** — Lighthouse LCP on `/work/:slug` mobile reported ~5s (homelab + Tailscale + simulated throttling). Adding `fetchpriority="high"` to the case-study hero `<LightboxImage>` should drop it materially. Not user-facing on real iPhone-over-Tailscale (Tailscale RTT dominates), but worth doing once on a real CDN.
-2. **Re-run Lighthouse on the real CDN** — current numbers are against homelab nginx through Tailscale, which inflates both LCP and SI vs. what real users on Cloudflare/Vercel will see. Once `geordinzolliecoffer.com` is pointed somewhere, run a fresh Lighthouse and capture the real numbers.
+1. ~~**Hero image `fetchpriority="high"`**~~ — **Done.** Added to both desktop and mobile case-study hero `<LightboxImage>` in `src/pages/CaseStudy.tsx`. Implemented via JSX spread (`{...{ fetchpriority: 'high' }}`) so the attribute lands as lowercase `fetchpriority` in the DOM — React 18.3.1 accepts that without warning; the camelCase form (`fetchPriority`) triggers a "React does not recognize" dev warning. Verified in DOM (`fetchpriority="high"` on the hero image) and via console-error interceptor (zero new warnings post-render).
+2. **Re-run Lighthouse on the real CDN** — Still open. Current numbers are against homelab nginx through Tailscale, which inflates both LCP and SI vs. what real users on Vercel will see. Run a fresh Lighthouse mobile audit on `/` and `/work/kith-west-hollywood` once `geordinzolliecoffer.com` resolves to Vercel and capture the real numbers in §21.
+
+---
+
+## 21. Production deployment (Vercel)
+
+**Current state:** repo is Vercel-ready as of Phase 3. Domain wiring and Vercel dashboard setup happen outside the repo — those are browser steps with Geordin's registrar and the Vercel account.
+
+**Roles:**
+- **Homelab (`http://homelab:8080`)** — dev/staging environment. Stays as-is. Used for iterative development, Tailscale-shared testing, and the rollback target (`geordin-portfolio-portfolio:pre-redesign` image preserved on the box). Container restart cmd remains `docker compose up -d --build` from `~/apps/geordin-portfolio/`.
+- **Vercel (`geordinzolliecoffer.com`)** — production. Geordin owns the domain on a non-Cloudflare registrar. Vercel will pull from the connected git remote on push to `main`.
+
+**Repo readiness checklist (Phase 3):**
+- `vercel.json` — present at repo root (existed from the forked starter). `framework: 'vite'`, `buildCommand: 'npm run build'`, `outputDirectory: 'dist'`. SPA rewrite uses a negative-lookahead regex so static asset paths (`/images`, `/assets`, `/api`, `/files`, `/videos`, `/fonts`, `/favicon`) are NOT redirected to `index.html` — they're served as static files. Headers section sets `max-age=31536000, immutable` on `/assets/*` (hashed bundles) and 1h on `/files/*`. **Don't simplify this rewrite to a catch-all `/(.*)` → `/index.html`** — that would route every `/images/work/*.webp` request through React, which is broken behavior.
+- `vite.config.ts` — dev-only `server.allowedHosts` and `preview.allowedHosts` reference homelab + `.ts.net` for local Tailscale dev. These keys are stripped from the production build and do not affect Vercel deploys. Kept for continued local dev convenience.
+- `src/lib/media.ts` — uses `import.meta.env.VITE_MEDIA_URL` (R2 base) with fallback to relative paths. Vercel will serve `/images/work/*.webp` directly from the deployed `public/` (no R2 configured by default). If R2 is wired later, set `VITE_MEDIA_URL=https://media.geordinzolliecoffer.com` (or similar) and `VITE_USE_LOCAL_MEDIA=0` in the Vercel dashboard env vars.
+- No hardcoded `homelab.tail5a87f7.ts.net` / `localhost` / IPs anywhere in `src/`. Verified by grep.
+- Eager-route imports (Gate 9) eliminate CLS on deep-links — important because Vercel's edge will sometimes serve cold instances and the Suspense flash would have shown up there too.
+
+**Local production smoke (run before pushing):**
+```bash
+npm run build                # tsc -b + vite build → dist/
+npm run preview              # vite preview at :4173, serves dist/
+# manually visit all 5 routes + a deep link + a 404 path
+```
+All 8 paths verified returning 200 from `vite preview`. SPA fallback works (a non-existent path renders the React 404 component).
+
+**Deploy steps (Geordin / browser-side):**
+1. Vercel dashboard → New Project → Import Git Repository → point at the geordin-portfolio repo (the existing `brendon-portfolio-v3` origin still points at the template fork — Geordin should fork to his own GitHub OR change the remote, then connect that to Vercel).
+2. Framework preset: Vite (auto-detected from `vercel.json`).
+3. Build command: `npm run build` (set by `vercel.json`). Output: `dist`.
+4. Deploy. Vercel will give a temporary `*.vercel.app` URL.
+5. Add custom domain `geordinzolliecoffer.com` + `www.geordinzolliecoffer.com` in the Vercel project settings.
+6. At the registrar: set `A` record on apex to `76.76.21.21` (Vercel's published value) OR (preferred) set `CNAME` on `www` → `cname.vercel-dns.com` and use Vercel's "redirect apex to www" toggle. Wait for DNS propagation (~5–30 min).
+7. Confirm cert provisioning (Vercel auto-issues via Let's Encrypt). Visit `https://geordinzolliecoffer.com`. Test every route + a hard reload on a deep-link (`/work/kith-west-hollywood`) to confirm the SPA rewrite.
+
+**Open items post-Vercel-launch:**
+- Run Lighthouse mobile audit on `/` and `/work/kith-west-hollywood` against the live `geordinzolliecoffer.com` and update §20 with real numbers.
+- Decide on Cloudflare Email Routing for `hello@geordinzolliecoffer.com` → Geordin's gmail (separate task; HANDOFF §15.1 referenced this).
+- Decide on R2 bucket for media offload (currently all 54 webp files ship in the Vercel deployment; ~20.6 MB total. Tolerable for a 3-project portfolio, but R2 would be cheaper at scale and faster for image-heavy pages).
 
 ---
 

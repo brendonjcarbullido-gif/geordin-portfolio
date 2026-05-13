@@ -67,6 +67,7 @@ export function CaseStudy() {
                 alt={project.title}
                 loading="eager"
                 decoding="async"
+                {...{ fetchpriority: 'high' }}
                 className="block h-auto w-full"
               />
             )}
@@ -99,6 +100,7 @@ export function CaseStudy() {
                   alt={project.title}
                   loading="eager"
                   decoding="async"
+                  {...{ fetchpriority: 'high' }}
                   className="block h-[70vh] w-full object-cover"
                 />
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-3 bg-gradient-to-t from-ink/90 via-ink/55 to-transparent px-5 pb-10 pt-32 sm:px-6">
