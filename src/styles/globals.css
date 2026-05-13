@@ -1,23 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;1,200;1,300&family=JetBrains+Mono:wght@300;400&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --cream: #f5f0e8;
-  --cream-2: #ede7d9;
-  --cream-3: #e4ddd0;
-  --ink: #1a1612;
-  --ink-2: #2e2820;
-  --ink-light: #6b6258;
-  --accent: #8b6f47;
-  --rule: rgba(26, 22, 18, 0.14);
-  --rule-strong: rgba(26, 22, 18, 0.32);
-  --serif: 'Cormorant Garamond', Georgia, serif;
-  --sans: 'DM Sans', system-ui, sans-serif;
+  --paper: #F6F4EF;
+  --paper-2: #EDEAE2;
+  --ink: #0E0E0E;
+  --ink-2: #1A1A1A;
+  --ink-soft: #8A8780;
+  --signal: #3D4F8A;
+  --signal-soft: #5C7FB8;
+  --rule: rgba(14, 14, 14, 0.14);
+  --rule-strong: rgba(14, 14, 14, 0.32);
+  --sans: 'Inter Tight', Inter, system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, monospace;
-  --ease: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snap: cubic-bezier(0.65, 0.01, 0.35, 1);
+
+  /* Legacy variable aliases — kept so older inline styles still resolve. */
+  --cream: var(--paper);
+  --cream-2: var(--paper-2);
+  --cream-3: var(--paper-2);
+  --ink-light: var(--ink-soft);
+  --accent: var(--signal);
+  --serif: var(--sans);
 }
 
 *, *::before, *::after {
@@ -28,36 +34,40 @@
 
 html {
   scroll-behavior: smooth;
-  background: var(--cream);
+  background: var(--paper);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   font-family: var(--sans);
-  font-weight: 300;
+  font-weight: 400;
   color: var(--ink);
-  background: var(--cream);
+  background: var(--paper);
   overflow-x: hidden;
-  line-height: 1.55;
+  line-height: 1.5;
   padding-bottom: env(safe-area-inset-bottom);
+  font-feature-settings: 'ss01' 1, 'cv11' 1;
 }
 
-::selection { background: var(--ink); color: var(--cream); }
+::selection { background: var(--ink); color: var(--paper); }
+::-moz-selection { background: var(--ink); color: var(--paper); }
 
 a { color: inherit; text-decoration: none; }
 img, video { max-width: 100%; display: block; }
 
-/* Subtle paper noise — gives the cream depth without dominating */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.035;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+/* Utility — vertical type for gutter labels */
+.vertical-rl {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* Hairline rule that runs the full width */
+.rule {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--rule);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -69,24 +79,20 @@ body::before {
   }
 }
 
-/* Hide scrollbars inside horizontal rails */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* When the custom Cursor component is active it sets html { cursor: none }.
-   Keep the native text caret on editable fields so typing still feels right. */
 input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
 textarea,
 [contenteditable="true"] { cursor: text; }
 
-/* —————— Ken Burns — continuous slow pan+zoom for hero tiles ——————
-   Six variants so tiles breathe asynchronously.
-   Durations 18–26s, transforms stay under 8% so they read as ambience. */
-@keyframes kb-a { 0%,100% { transform: scale(1.08) translate3d(-1.5%, -1%, 0); } 50% { transform: scale(1.14) translate3d( 1.5%,  1.5%, 0); } }
-@keyframes kb-b { 0%,100% { transform: scale(1.12) translate3d( 1.5%, -1%, 0); } 50% { transform: scale(1.08) translate3d(-1.5%,  1.5%, 0); } }
-@keyframes kb-c { 0%,100% { transform: scale(1.06) translate3d( 0.5%,  1%, 0); } 50% { transform: scale(1.14) translate3d(-1%, -1.2%, 0); } }
-@keyframes kb-d { 0%,100% { transform: scale(1.10) translate3d(-1%,   1%, 0); } 50% { transform: scale(1.04) translate3d( 2%,  -1%, 0); } }
-@keyframes kb-e { 0%,100% { transform: scale(1.14) translate3d( 1%,  -0.5%, 0); } 50% { transform: scale(1.08) translate3d(-2%,  0.8%, 0); } }
+/* Ken Burns — slow drift for chapter heroes. Six variants so adjacent chapters
+   breathe asynchronously. Magnitudes stay <8% so they read as ambience. */
+@keyframes kb-a { 0%,100% { transform: scale(1.06) translate3d(-1%, -0.6%, 0); } 50% { transform: scale(1.11) translate3d( 1%,  1%, 0); } }
+@keyframes kb-b { 0%,100% { transform: scale(1.09) translate3d( 1%, -0.6%, 0); } 50% { transform: scale(1.05) translate3d(-1%,  1%, 0); } }
+@keyframes kb-c { 0%,100% { transform: scale(1.04) translate3d( 0.4%, 0.6%, 0); } 50% { transform: scale(1.10) translate3d(-0.8%, -0.8%, 0); } }
+@keyframes kb-d { 0%,100% { transform: scale(1.07) translate3d(-0.6%, 0.6%, 0); } 50% { transform: scale(1.03) translate3d( 1.3%, -0.6%, 0); } }
+@keyframes kb-e { 0%,100% { transform: scale(1.10) translate3d( 0.6%, -0.3%, 0); } 50% { transform: scale(1.05) translate3d(-1.3%, 0.5%, 0); } }
 
 .kb-a > img, .kb-a > video { animation: kb-a 22s ease-in-out infinite; will-change: transform; }
 .kb-b > img, .kb-b > video { animation: kb-b 26s ease-in-out infinite; will-change: transform; }
@@ -102,7 +108,6 @@ textarea,
   .kb-e > img, .kb-e > video { animation: none !important; transform: none !important; }
 }
 
-/* Work grid — stagger offsets only apply in the multi-column (md+) layout */
 .card-offset { margin-top: var(--card-offset, 0px); }
 @media (max-width: 767px) {
   .card-offset { margin-top: 0 !important; }

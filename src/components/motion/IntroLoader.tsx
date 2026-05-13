@@ -3,17 +3,13 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useMediaPreload } from '@/hooks/useMediaPreload'
 import { PRELOAD_ASSETS, getPageAssets } from '@/lib/preloadAssets'
 
-const SESSION_KEY = 'v3-intro-seen'
-const MIN_DISPLAY_MS = 1300  // always show for at least this long
-const MAX_WAIT_MS = 9000     // never block longer than this
+const SESSION_KEY = 'gz-intro-seen'
+const MIN_DISPLAY_MS = 900
+const MAX_WAIT_MS = 8000
 
 /**
- * IntroLoader — first-visit-only editorial loader.
- *  • Preloads all hero/rail media during the curtain so nothing pops after lift.
- *  • Counter reflects real load progress (0 → 100) with smooth easing.
- *  • Lifts via two stacked panels splitting vertically once assets are ready.
- *  • Sets sessionStorage so re-renders / route changes don't re-trigger.
- *  • Skipped under reduced-motion.
+ * IntroLoader — first-visit black curtain. Mono counter, bold wordmark, single
+ * hairline progress bar. Lifts as one panel (no two-half split).
  */
 export function IntroLoader() {
   const prefersReduced = useReducedMotion()
@@ -24,17 +20,13 @@ export function IntroLoader() {
   const [pct, setPct] = useState(0)
   const [lifting, setLifting] = useState(false)
 
-  // Combine global preload with any page-specific assets (e.g. case study gallery on direct link)
   const assets = done
     ? []
     : [...PRELOAD_ASSETS, ...getPageAssets(window.location.pathname)]
   const { progress } = useMediaPreload(assets)
 
-  // Keep a ref so the RAF loop always reads the latest value without re-mounting
   const progressRef = useRef(0)
-  useEffect(() => {
-    progressRef.current = progress
-  }, [progress])
+  useEffect(() => { progressRef.current = progress }, [progress])
 
   useEffect(() => {
     if (done) return
@@ -53,14 +45,10 @@ export function IntroLoader() {
 
     const tick = (now: number) => {
       const elapsed = now - start
-      // Force 100% after max wait so a slow connection never blocks forever
       const realTarget = elapsed >= MAX_WAIT_MS ? 100 : progressRef.current * 100
-
-      // Ease displayPct toward realTarget — minimum step prevents it from stalling
       const diff = realTarget - displayPct
-      const step = Math.max(0.18, diff * 0.055)
+      const step = Math.max(0.22, diff * 0.06)
       displayPct = Math.min(realTarget, displayPct + step)
-
       setPct(Math.round(displayPct))
 
       if (displayPct >= 99.5 && elapsed >= MIN_DISPLAY_MS && !lifted) {
@@ -70,13 +58,11 @@ export function IntroLoader() {
           sessionStorage.setItem(SESSION_KEY, '1')
           setDone(true)
           document.body.style.overflow = ''
-        }, 1100)
+        }, 900)
         return
       }
-
       raf = requestAnimationFrame(tick)
     }
-
     raf = requestAnimationFrame(tick)
     return () => {
       cancelAnimationFrame(raf)
@@ -89,57 +75,53 @@ export function IntroLoader() {
       {!done && (
         <motion.div
           key="intro"
-          className="fixed inset-0 z-[90]"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 1 }}
+          className="fixed inset-0 z-[90] bg-ink text-paper"
+          initial={{ y: 0 }}
+          animate={{ y: lifting ? '-101%' : 0 }}
+          exit={{ y: '-101%' }}
+          transition={{ duration: 0.9, ease: [0.77, 0, 0.175, 1] }}
         >
-          {/* Top half panel */}
-          <motion.div
-            className="absolute inset-x-0 top-0 h-1/2 bg-ink"
-            animate={{ y: lifting ? '-101%' : 0 }}
-            transition={{ duration: 1.05, ease: [0.77, 0, 0.175, 1] }}
-          />
-          {/* Bottom half panel */}
-          <motion.div
-            className="absolute inset-x-0 bottom-0 h-1/2 bg-ink"
-            animate={{ y: lifting ? '101%' : 0 }}
-            transition={{ duration: 1.05, ease: [0.77, 0, 0.175, 1] }}
-          />
-          {/* Foreground content */}
-          <motion.div
-            className="relative flex h-full w-full flex-col items-center justify-center text-cream"
-            animate={{ opacity: lifting ? 0 : 1 }}
-            transition={{ duration: 0.45, ease: [0.19, 1, 0.22, 1] }}
-          >
-            <motion.span
-              className="font-mono text-[11px] uppercase tracking-[0.22em] text-cream/60"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
-            >
-              Brendon Carbullido — 2026
-            </motion.span>
-            <motion.p
-              className="mt-6 font-serif text-[clamp(3.25rem,10vw,8rem)] font-light italic leading-[0.92] tracking-[-0.025em]"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, ease: [0.19, 1, 0.22, 1], delay: 0.1 }}
-            >
-              Art. Direction.
-            </motion.p>
-            <div className="mt-10 flex w-[min(68vw,32rem)] items-center gap-4">
-              <motion.div
-                className="h-px flex-1 origin-left bg-cream/30"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: pct / 100 }}
-                transition={{ duration: 0.1, ease: 'linear' }}
-                style={{ transformOrigin: 'left' }}
-              />
-              <span className="min-w-[3ch] font-mono text-[11px] uppercase tracking-[0.18em] tabular-nums text-cream/80">
+          <div className="flex h-full flex-col justify-between px-5 py-8 sm:px-6 md:px-10 md:py-10">
+            {/* Top strip — site mark + year */}
+            <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-paper/70">
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-signal-soft" aria-hidden />
+                Geordin Zolliecoffer
+              </span>
+              <span>Vol. 01 · 2026</span>
+            </div>
+
+            {/* Center — wordmark */}
+            <div className="flex flex-col items-start gap-6">
+              <motion.h1
+                className="text-[clamp(2rem,12vw,12rem)] font-extrabold uppercase leading-[0.86] tracking-[-0.04em]"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+              >
+                Visual
+                <br />
+                <span className="text-paper/60">Merchandising</span>
+              </motion.h1>
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/70">
+                Thirteen years · Los Angeles · Kith · Nordstrom
+              </p>
+            </div>
+
+            {/* Bottom — progress */}
+            <div className="flex items-center gap-6">
+              <span className="min-w-[3ch] font-mono text-[10px] uppercase tracking-[0.22em] tabular-nums text-paper/70">
                 {String(pct).padStart(3, '0')}
               </span>
+              <div className="relative h-px flex-1 bg-paper/15">
+                <motion.div
+                  className="absolute inset-y-0 left-0 origin-left bg-paper"
+                  style={{ width: '100%', scaleX: pct / 100, transition: 'transform 100ms linear' }}
+                />
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/70">Loading</span>
             </div>
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

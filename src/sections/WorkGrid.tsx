@@ -1,96 +1,106 @@
-import { motion } from 'framer-motion'
-import type { CSSProperties } from 'react'
-import { projects } from '@/data/projects'
-import { WorkCard } from '@/components/WorkCard'
-import { ease } from '@/constants/animation'
+import { useRef } from 'react'
+import { Link } from 'react-router-dom'
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion'
+import { projects, type Project } from '@/data/projects'
+import { MosaicCollage } from '@/components/MosaicCollage'
+import { ChapterStripMobile } from '@/components/ChapterStripMobile'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
-const containerVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.1 } },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 48 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.9, ease } },
-}
-
-/** Editorial column pattern — big / small / small / big ... */
-function colSpanFor(i: number) {
-  const pattern = [7, 5, 5, 7, 6, 6, 7, 5]
-  return pattern[i % pattern.length]
-}
-
-function topOffsetFor(i: number) {
-  const offsets = [0, 20, 0, 16, 8, 24, 0, 12]
-  return offsets[i % offsets.length]
-}
-
+/**
+ * WorkGrid — three chapter spreads. Desktop renders the 4-image mosaic with
+ * scroll-tracked 3D motion (MosaicCollage). Mobile renders a horizontal
+ * snap-scroll strip per chapter (ChapterStripMobile). useMediaQuery picks
+ * one or the other so neither component pays mount/effect cost on the
+ * wrong device.
+ */
 export function WorkGrid({ omitHeader = false }: { omitHeader?: boolean }) {
-  const showFeatured = true
+  const isDesktop = useMediaQuery('(min-width: 768px)')
+  return (
+    <section id="work-grid" className={`relative bg-paper text-ink ${omitHeader ? '' : ''}`}>
+      {!omitHeader && (
+        <header className="border-b border-rule px-5 py-8 sm:px-6 sm:py-10 md:px-10 md:py-14">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft">
+            Index 002 — Selected Work
+          </p>
+          <h2 className="mt-6 text-display-xl font-extrabold uppercase leading-[0.86] tracking-[-0.045em] text-ink">
+            Three flagships.
+          </h2>
+        </header>
+      )}
+
+      <ol className="relative">
+        {projects.map((p, i) =>
+          isDesktop ? (
+            <Chapter key={p.slug} project={p} index={i} reverse={i % 2 === 1} />
+          ) : (
+            <ChapterStripMobile key={p.slug} project={p} index={i} />
+          ),
+        )}
+      </ol>
+    </section>
+  )
+}
+
+function Chapter({ project, index, reverse }: { project: Project; index: number; reverse: boolean }) {
+  const reduce = useReducedMotion()
+  const ref = useRef<HTMLLIElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
+  const railY = useTransform(scrollYProgress, [0, 1], reduce ? ['0%', '0%'] : ['10%', '-10%'])
+
+  const num = String(index + 1).padStart(3, '0')
+  const total = '003'
 
   return (
-    <section
-      id="work-grid"
-      className={`relative bg-cream px-5 text-ink sm:px-6 md:px-10 ${omitHeader ? 'pb-24 pt-8 sm:pb-28 sm:pt-12' : 'py-24 sm:py-28 md:py-40'}`}
-    >
-      <div className="mx-auto max-w-[120rem]">
-        {!omitHeader && (
-          <>
-            <div className="grid gap-10 md:grid-cols-12">
-              <motion.p
-                className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-light md:col-span-3"
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.4 }}
-                transition={{ duration: 0.7, ease }}
-              >
-                Index — Selected Work
-              </motion.p>
-              <motion.h2
-                className="font-serif text-[clamp(2.5rem,7vw,7rem)] font-light italic leading-[0.96] tracking-[-0.025em] text-ink md:col-span-9"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.9, ease }}
-              >
-                Creative direction<span className="text-accent">.</span>
-              </motion.h2>
-            </div>
-            <div className="my-16 h-px w-full bg-ink/15" />
-          </>
-        )}
-
-        <motion.div
-          className="grid grid-cols-1 gap-x-6 gap-y-20 md:grid-cols-12 md:gap-y-28"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.08 }}
+    <li ref={ref} className="relative border-b border-rule">
+      <div className="grid grid-cols-12 gap-x-4 px-5 py-14 sm:px-6 sm:py-20 md:px-10 md:py-28">
+        {/* Side rail — chapter number, label, year, role, CTA */}
+        <motion.aside
+          className={`col-span-12 mb-6 md:col-span-3 md:mb-0 ${reverse ? 'md:order-2 md:col-start-10' : 'md:col-start-1'}`}
+          style={{ y: railY }}
         >
-          {projects.map((p, i) => {
-            const span = colSpanFor(i)
-            const offset = topOffsetFor(i)
-            return (
-              <motion.div
-                key={p.slug}
-                variants={itemVariants}
-                className="h-full card-offset"
-                style={{
-                  '--card-offset': offset > 0 ? `${offset * 0.25}rem` : '0px',
-                  gridColumn: `span ${span} / span ${span}`,
-                } as CSSProperties}
-              >
-                <WorkCard
-                  project={p}
-                  index={i}
-                  featured={showFeatured && i === 0}
-                  asLink
-                />
-              </motion.div>
-            )
-          })}
-        </motion.div>
+          <div className="flex flex-col gap-5 md:sticky md:top-28">
+            <div className="flex items-center justify-between font-mono text-[10px] uppercase leading-none tracking-[0.22em] text-ink-soft md:flex-col md:items-start md:gap-3">
+              <span>{num} / {total}</span>
+              <span>{project.category}</span>
+            </div>
+
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft">
+              {project.client}
+            </p>
+            <h3 className="text-[clamp(1.125rem,1.4vw,1.5rem)] font-extrabold uppercase leading-[1.05] tracking-[-0.01em] text-ink">
+              {project.title}
+            </h3>
+
+            <ul className="flex flex-col gap-1.5 border-t border-rule pt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft">
+              <li><span className="text-ink-soft/60">Year</span> <span className="ml-1 text-ink">{String(project.year)}</span></li>
+              <li><span className="text-ink-soft/60">Role</span> <span className="ml-1 text-ink">{project.caseStudy.role}</span></li>
+              <li><span className="text-ink-soft/60">Location</span> <span className="ml-1 text-ink">Los Angeles</span></li>
+            </ul>
+
+            <Link
+              to={`/work/${project.slug}`}
+              className="group mt-2 inline-flex w-fit items-center gap-2 border border-ink px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink transition-colors duration-300 hover:bg-ink hover:text-paper"
+              data-cursor="View"
+            >
+              Case study
+              <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+            </Link>
+          </div>
+        </motion.aside>
+
+        {/* 4-image mosaic collage with 3D scroll motion */}
+        <div className={`col-span-12 md:col-span-9 ${reverse ? 'md:order-1 md:col-start-1' : 'md:col-start-4'}`}>
+          <MosaicCollage
+            images={project.featured}
+            group={project.slug}
+            client={project.client}
+            reverse={reverse}
+          />
+        </div>
       </div>
-    </section>
+    </li>
   )
 }

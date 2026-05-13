@@ -12,6 +12,12 @@ dist
 # Editor
 .DS_Store
 *.log
+.claude
+
+# Mobile redesign — local screenshot baselines + diff outputs (never committed)
+.baseline-screenshots
+.current-screenshots
+.diff-report
 
 # Media — served from Cloudflare R2
 public/videos

@@ -1,199 +1,109 @@
-import { motion } from 'framer-motion'
 import { About } from '@/sections/About'
-import { Process } from '@/sections/Process'
 import { Expertise } from '@/sections/Expertise'
+import { HeaderCarousel } from '@/components/HeaderCarousel'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { resume } from '@/data/resume'
+import { projects } from '@/data/projects'
+import { motion } from 'framer-motion'
 
-const ease = [0.19, 1, 0.22, 1] as const
+const ease = [0.16, 1, 0.3, 1] as const
 
+/**
+ * AboutPage — biography route. Title is the focal point; a dimmed
+ * carousel sits BEHIND it as ambient context.
+ */
 export function AboutPage() {
+  const isDesktop = useMediaQuery('(min-width: 768px)')
   const { identity, summary, education } = resume
+  const carouselImages = projects.flatMap((p) => p.featured.slice(0, 2))
 
   return (
-    <main className="relative min-h-screen bg-cream text-ink">
-      {/* Hero band */}
-      <section className="px-5 pb-14 pt-32 sm:px-6 sm:pb-16 sm:pt-40 md:px-10 md:pb-24 md:pt-44">
-        <div className="mx-auto max-w-[120rem]">
-          <motion.p
-            className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-light"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease }}
-          >
+    <main className="relative min-h-screen bg-paper text-ink">
+      {/* Top metadata strip */}
+      <div className="grid grid-cols-12 gap-x-4 border-b border-rule px-5 py-4 pt-24 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft sm:px-6 md:px-10 md:pt-28">
+        <span className="col-span-6 md:col-span-3">Index — About</span>
+        <span className="hidden md:col-span-6 md:block text-center text-ink">
+          Kith · Nordstrom · Los Angeles
+        </span>
+        <span className="col-span-6 text-right md:col-span-3">FIDM · 2013 — 2015</span>
+      </div>
+
+      {/* Hero band — name as focal. Desktop layers a dimmed carousel BEHIND
+          the name; mobile renders the carousel below the name. Only one
+          HeaderCarousel mounts (single source of truth for the
+          `about-header` group — no duplicate lightbox entries from
+          CSS-hiding the wrong viewport's mount). */}
+      <section className="relative overflow-hidden px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-28">
+        {isDesktop && (
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 px-5 sm:px-6 md:px-10">
+            <div className="ml-auto w-[55%] pointer-events-auto">
+              <HeaderCarousel
+                images={carouselImages}
+                group="about-header"
+                label="From the floor"
+                dimmed
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="relative z-10 grid grid-cols-12 gap-x-4 gap-y-10">
+          <p className="col-span-12 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft">
             {identity.roles.join(' · ')}
-          </motion.p>
+          </p>
           <motion.h1
-            className="mt-6 font-serif text-[clamp(3rem,10vw,10rem)] font-light italic leading-[0.92] tracking-[-0.03em] text-ink"
-            initial={{ opacity: 0, y: 32 }}
+            className="col-span-12 mt-6 text-display-lg font-extrabold uppercase leading-[0.86] tracking-[-0.035em] text-ink md:mt-0"
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, ease, delay: 0.1 }}
           >
-            {identity.name}
-            <span className="text-accent">.</span>
+            <span className="block">Geordin</span>
+            <span className="block text-signal">Zolliecoffer.</span>
           </motion.h1>
-          {/* Summary */}
+
           <motion.p
-            className="mt-10 max-w-[56ch] font-serif text-[clamp(1.125rem,1.5vw,1.4rem)] font-light leading-[1.65] text-ink"
-            initial={{ opacity: 0, y: 24 }}
+            className="col-span-12 mt-6 max-w-[58ch] text-[clamp(1.0625rem,1.4vw,1.45rem)] font-medium leading-[1.55] text-ink md:col-span-9 md:col-start-4"
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, ease, delay: 0.25 }}
           >
             {summary}
           </motion.p>
-          {/* Impact stats strip */}
-          <motion.div
-            className="mt-14 flex flex-wrap gap-x-10 gap-y-6 border-t border-ink/15 pt-10"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease, delay: 0.4 }}
-          >
-            {resume.impact.map((stat) => (
-              <div key={stat.label}>
-                <p className="font-serif text-[clamp(2rem,3.5vw,3rem)] font-light italic leading-none text-ink">
-                  {stat.value}
-                </p>
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-light">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </motion.div>
-          {/* Client strip */}
-          <motion.div
-            className="mt-14 overflow-hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, ease, delay: 0.55 }}
-          >
-            <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-light">
-              Clients
-            </p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {resume.clients.map((client) => (
-                <span
-                  key={client}
-                  className="font-serif text-[clamp(1rem,1.4vw,1.2rem)] font-light italic text-ink"
-                >
-                  {client}
-                </span>
-              ))}
+
+          {!isDesktop && (
+            <div className="col-span-12">
+              <HeaderCarousel
+                images={carouselImages}
+                group="about-header"
+                label="From the floor"
+              />
             </div>
-          </motion.div>
+          )}
         </div>
       </section>
 
       <About />
 
-      {/* Experience timeline */}
-      <section className="bg-cream-2 px-5 py-24 text-ink sm:px-6 sm:py-28 md:px-10 md:py-36">
-        <div className="mx-auto max-w-[120rem]">
-          <div className="grid gap-10 md:grid-cols-12">
-            <motion.p
-              className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-light md:col-span-4"
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.7, ease }}
-            >
-              Experience
-            </motion.p>
-            <motion.h2
-              className="font-serif text-[clamp(2.5rem,5vw,5rem)] font-light italic leading-[0.96] tracking-[-0.02em] text-ink md:col-span-8"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.9, ease }}
-            >
-              Seven years<span className="text-accent">.</span>
-            </motion.h2>
-          </div>
-
-          <div className="mt-16 divide-y divide-ink/15 border-t border-ink/15">
-            {resume.experience.map((role, i) => (
-              <motion.article
-                key={`${role.company}-${role.title}-${i}`}
-                className="grid gap-4 py-10 md:grid-cols-12 md:gap-10"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.8, ease, delay: i * 0.04 }}
-              >
-                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-light md:col-span-3 md:pt-2">
-                  {role.dateRange}
-                </p>
-                <div className="md:col-span-9">
-                  <h3 className="font-serif text-[clamp(1.5rem,2.4vw,2.25rem)] font-light italic leading-tight tracking-[-0.02em] text-ink">
-                    {role.title}
-                    <span className="text-accent"> — </span>
-                    <span className="not-italic text-ink">{role.company}</span>
-                  </h3>
-                  <ul className="mt-4 flex flex-col gap-2 font-sans text-[15px] font-light leading-[1.7] text-ink-light">
-                    {role.bullets.map((b, j) => (
-                      <li key={j} className="flex gap-3">
-                        <span className="mt-[0.7em] h-px w-3 shrink-0 bg-ink-light" />
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </motion.article>
-            ))}
+      {/* Education */}
+      <section className="border-t border-rule px-5 py-20 text-ink sm:px-6 sm:py-28 md:px-10 md:py-36">
+        <div className="mx-auto grid max-w-[120rem] grid-cols-12 gap-x-4 gap-y-10">
+          <p className="col-span-12 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft md:col-span-3">
+            Education
+          </p>
+          <div className="col-span-12 md:col-span-9">
+            <h3 className="text-[clamp(1.5rem,2.4vw,2.25rem)] font-extrabold uppercase leading-[0.98] tracking-[-0.025em] text-ink">
+              {education.school}
+            </h3>
+            <p className="mt-3 text-[14px] font-medium text-ink-soft md:text-[15px]">
+              {education.degree} · {education.focus} · {education.emphasis}
+            </p>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft">
+              {education.years}
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Skills + Industries + Education */}
-      <section className="px-5 py-24 text-ink sm:px-6 sm:py-28 md:px-10 md:py-36">
-        <div className="mx-auto grid max-w-[120rem] gap-14 md:grid-cols-12">
-          <div className="md:col-span-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-light">Skills</p>
-            <div className="mt-6 flex flex-col gap-8">
-              {(['direction', 'production', 'tools'] as const).map((k) => (
-                <div key={k}>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent">{k}</p>
-                  <ul className="mt-2 flex flex-col gap-1 font-serif text-[17px] italic text-ink">
-                    {resume.skills[k].map((s) => (
-                      <li key={s}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="md:col-span-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-light">Industries</p>
-            <ul className="mt-6 flex flex-wrap gap-2">
-              {resume.industries.map((ind) => (
-                <li
-                  key={ind}
-                  className="rounded-full border border-ink/25 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-ink"
-                >
-                  {ind}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="md:col-span-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-light">Education</p>
-            <div className="mt-6">
-              <p className="font-serif text-[clamp(1.5rem,2vw,1.875rem)] font-light italic text-ink">
-                {education.school}
-              </p>
-              <p className="mt-2 font-sans text-[14px] font-light text-ink-light">
-                {education.degree} · {education.focus}
-              </p>
-              <p className="mt-1 font-serif italic text-accent">{education.emphasis}</p>
-              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-light">
-                {education.years}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <Process />
       <Expertise />
     </main>
   )

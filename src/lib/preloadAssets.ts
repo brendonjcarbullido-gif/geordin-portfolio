@@ -1,8 +1,8 @@
 import type { MediaAsset } from '@/hooks/useMediaPreload'
 import { projects } from '@/data/projects'
 
-// These 5 slugs map to the hero mosaic tiles — load them first
-const HERO_SLUGS = ['teeccino-packaging', 'anne-klein', 'joseph-abboud', 'lotto-us', 'casa-amour']
+// Slugs of projects whose hero images should preload first.
+const HERO_SLUGS = ['kith-west-hollywood', 'kith-sunset', 'nordstrom-thousand-oaks']
 
 function buildAssetList(): MediaAsset[] {
   const seen = new Set<string>()
@@ -36,8 +36,7 @@ function buildAssetList(): MediaAsset[] {
     }
   })
 
-  // Above-the-fold static images
-  add('/images/about/brendon-portrait.webp', 'image')
+  // (No portrait — About spread is text-only)
 
   // Poster images for all video projects — mobile video fallback
   projects.forEach((p) => {

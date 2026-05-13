@@ -1,146 +1,59 @@
-import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ease } from '@/constants/animation'
-import { SectionReveal } from '@/components/motion/SectionReveal'
-import { Scramble } from '@/components/motion/Scramble'
-import { SplitReveal } from '@/components/motion/SplitReveal'
 
-const cards = [
-  {
-    title: 'Full Creative Ownership',
-    description:
-      "From concept to camera to content calendar. I'm the strategist, shooter, director, and editor. One person. Full suite.",
-  },
-  {
-    title: 'Art Direction',
-    description: 'Visual systems that are distinct, intentional, and scalable across every touchpoint.',
-  },
-  {
-    title: 'Brand Strategy',
-    description: 'I build the thinking before I build the visuals. Positioning, voice, identity — then execution.',
-  },
-  {
-    title: 'Social Content',
-    description:
-      "Platform-native content built for performance. I've grown accounts from zero to 45K+ at 6% engagement.",
-  },
-  {
-    title: 'Photography + Video',
-    description: 'Commercial-grade production handled in-house. Shoot direction, editing, post — all of it.',
-  },
-  {
-    title: 'Packaging Design',
-    description: 'Physical brand presence. Product lines and seasonal packaging from concept through print-ready files.',
-  },
-  {
-    title: 'Campaign Direction',
-    description:
-      'End-to-end campaign leadership for fashion, spirits, CPG, and lifestyle — from brief to delivery.',
-  },
-  {
-    title: 'AI-Integrated Workflows',
-    description: 'I use AI tooling to move faster and smarter — across content ideation, production, and analytics.',
-  },
+/**
+ * Capabilities — single tag grid, no accordion, no hover-expand. Each capability
+ * is a chip. The eye reads the breadth in a single glance.
+ */
+const tags = [
+  'Visual Merchandising',
+  'Window Design',
+  'Mannequin Styling',
+  'Seasonal Floorsets',
+  'Store Remodel Leadership',
+  'Grand Opening Execution',
+  'Team Training',
+  'Cross-functional Partnership',
+  'Brand Storytelling',
+  'Vinyl & Signage Install',
+  'Buy-to-Floor Translation',
+  'Fixture Reinvention',
 ] as const
 
-function useCanHover() {
-  const [canHover, setCanHover] = useState(true)
-  useEffect(() => {
-    const mq = matchMedia('(hover: hover) and (pointer: fine)')
-    const update = () => setCanHover(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [])
-  return canHover
-}
-
 export function Expertise() {
-  const [hover, setHover] = useState<number | null>(null)
-  const [expanded, setExpanded] = useState<number | null>(null)
-  const canHover = useCanHover()
-
   return (
-    <section id="expertise" className="relative bg-cream px-5 py-24 text-ink sm:px-6 sm:py-28 md:px-10 md:py-40">
-      <div className="mx-auto max-w-[120rem]">
-        <div className="grid gap-8 md:grid-cols-12 md:gap-10">
-          <SectionReveal edge="left" className="md:col-span-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-light">
-              <Scramble text="04 — CAPABILITIES" />
-            </p>
-          </SectionReveal>
-          <SplitReveal
-            as="h2"
-            className="font-serif text-[clamp(2.25rem,6vw,6rem)] font-light italic leading-[0.96] tracking-[-0.025em] text-ink md:col-span-8"
-          >
-            {[
-              <span key="l1">What I bring<span className="text-accent">.</span></span>,
-            ]}
-          </SplitReveal>
-        </div>
+    <section id="expertise" className="relative bg-paper text-ink">
+      <div className="grid grid-cols-12 gap-x-4 border-b border-rule px-5 py-4 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft sm:px-6 md:px-10">
+        <span className="col-span-6 md:col-span-3">Index 004 — Capabilities</span>
+        <span className="hidden md:col-span-6 md:block text-center text-ink">12 disciplines · one practice</span>
+        <span className="col-span-6 text-right md:col-span-3">Selected</span>
+      </div>
 
-        <div className="mt-12 border-t border-ink/15 sm:mt-14 md:mt-16">
-          {cards.map((card, i) => {
-            const isHover = canHover && hover === i
-            // Desktop: show on hover. Mobile: tap to expand/collapse (accordion).
-            const showDescription = canHover ? isHover : expanded === i
-            return (
-              <motion.div
-                key={card.title}
-                className={`group relative block w-full border-b border-ink/15 text-left ${!canHover ? 'cursor-pointer' : ''}`}
-                onMouseEnter={() => canHover && setHover(i)}
-                onMouseLeave={() => canHover && setHover(null)}
-                onClick={() => !canHover && setExpanded(expanded === i ? null : i)}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.7, ease, delay: i * 0.04 }}
-              >
-                <div className="grid grid-cols-12 items-start gap-x-4 gap-y-3 px-0 py-6 sm:py-7 md:items-center md:py-9">
-                  <span className="col-span-2 pt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-light sm:text-[11px] md:col-span-1">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <h3 className="col-span-9 font-serif text-[clamp(1.5rem,3.25vw,3.25rem)] font-light italic leading-[1.02] tracking-[-0.02em] text-ink transition-colors duration-500 group-hover:text-accent md:col-span-6">
-                    {card.title}
-                  </h3>
-                  {/* Mobile accordion toggle */}
-                  {!canHover && (
-                    <span aria-hidden className="col-span-1 flex items-start justify-end pt-2 md:hidden">
-                      <span
-                        className={`font-mono text-[16px] leading-none text-ink-light transition-transform duration-300 ease-[cubic-bezier(0.19,1,0.22,1)] ${
-                          expanded === i ? 'rotate-45' : 'rotate-0'
-                        }`}
-                      >
-                        +
-                      </span>
-                    </span>
-                  )}
-                  <div
-                    className={`col-span-12 row-start-2 overflow-hidden transition-[max-height,opacity] duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] md:col-span-5 md:col-start-8 md:row-start-auto ${
-                      canHover
-                        ? isHover
-                          ? 'max-h-[16rem] opacity-100'
-                          : 'max-h-0 opacity-0'
-                        : showDescription
-                          ? 'max-h-[16rem] opacity-100'
-                          : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    <p className={`max-w-[44ch] font-sans text-[13px] font-light leading-[1.7] text-ink-light sm:text-[14px] md:text-[15px] ${!canHover ? 'pb-4' : ''}`}>
-                      {card.description}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  aria-hidden
-                  className={`absolute bottom-0 left-0 block h-px w-full origin-left bg-ink transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] ${
-                    showDescription && canHover ? 'scale-x-100' : 'scale-x-0'
-                  }`}
-                />
-              </motion.div>
-            )
-          })}
-        </div>
+      <div className="grid grid-cols-12 gap-x-4 gap-y-10 px-5 py-20 sm:px-6 sm:py-28 md:px-10 md:py-36">
+        {/* Section headline */}
+        <h2 className="col-span-12 text-display-lg font-extrabold uppercase leading-[0.88] tracking-[-0.035em] text-ink md:col-span-10">
+          The full
+          <br />
+          <span className="text-ink-soft">visual.</span>
+        </h2>
+
+        {/* Tag grid — mobile: 2-col grid with full-width chips and tap-time
+            underline. Desktop: flex-wrap with hover-fill (md+ has hover). */}
+        <ul className="col-span-12 grid grid-cols-2 gap-2 md:col-span-10 md:flex md:flex-wrap md:gap-3">
+          {tags.map((tag, i) => (
+            <motion.li
+              key={tag}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: i * 0.025 }}
+              className="group"
+            >
+              <span className="block border border-ink/85 px-4 py-2 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-ink transition-colors duration-300 active:underline active:decoration-signal active:decoration-2 active:underline-offset-[6px] md:inline-block md:px-5 md:py-3 md:text-left md:text-[12px] md:group-hover:bg-ink md:group-hover:text-paper md:active:no-underline">
+                {tag}
+              </span>
+            </motion.li>
+          ))}
+        </ul>
       </div>
     </section>
   )

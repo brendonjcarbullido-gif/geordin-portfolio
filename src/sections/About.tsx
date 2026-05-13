@@ -1,157 +1,105 @@
-import { useEffect, useRef, useState } from 'react'
-import { motion, useInView, useScroll, useTransform, useReducedMotion } from 'framer-motion'
-import { ease } from '@/constants/animation'
-import { SectionReveal } from '@/components/motion/SectionReveal'
-import { Scramble } from '@/components/motion/Scramble'
-import { SplitReveal } from '@/components/motion/SplitReveal'
+import { image } from '@/lib/media'
+import { LightboxImage } from '@/components/Lightbox'
 
-const STATS = [
-  { end: 7, suffix: '+', label: 'Years' },
-  { end: 45, suffix: 'K+', label: 'Followers Built' },
-  { end: 40, suffix: '%', label: 'Engagement Lift' },
-  { end: 7, suffix: '+', label: 'Agency Clients' },
-] as const
-
-function StatCounter({ end, suffix, label, enabled }: { end: number; suffix: string; label: string; enabled: boolean }) {
-  const [value, setValue] = useState(0)
-
-  useEffect(() => {
-    if (!enabled) return
-    let raf = 0
-    const start = performance.now()
-    const duration = 1800
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration)
-      const eased = 1 - (1 - t) ** 3
-      setValue(Math.round(end * eased))
-      if (t < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [end, enabled])
-
-  return (
-    <div>
-      <p className="font-serif text-[clamp(2.25rem,3.6vw,3.75rem)] font-light leading-none tracking-[-0.02em] text-ink">
-        {value}
-        <span className="text-accent">{suffix}</span>
-      </p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-light">{label}</p>
-    </div>
-  )
-}
-
+/**
+ * About — inverse (black) editorial spread. Manifesto headline, two short
+ * prose blocks, numeric stat strip. Side image renders edge-to-edge in its
+ * column (no letterbox frame) at native ratio.
+ */
 export function About() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const statsRef = useRef<HTMLDivElement>(null)
-  const portraitRef = useRef<HTMLDivElement>(null)
-  const statsInView = useInView(statsRef, { once: true, amount: 0.4 })
-  const prefersReduced = useReducedMotion()
-
-  // Parallax on portrait: slow upward drift while section scrolls
-  const { scrollYProgress } = useScroll({
-    target: portraitRef,
-    offset: ['start end', 'end start'],
-  })
-  const portraitY = useTransform(scrollYProgress, [0, 1], prefersReduced ? ['0%', '0%'] : ['12%', '-12%'])
-
   return (
-    <section
-      ref={sectionRef}
-      id="about"
-      className="relative bg-cream px-5 py-24 text-ink sm:px-6 sm:py-28 md:px-10 md:py-40 md:pb-[40vh]"
-    >
-      <div className="mx-auto max-w-[120rem]">
-        {/* Section label */}
-        <SectionReveal edge="left">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-light">
-            <Scramble text="02 — ABOUT THE STUDIO" />
-          </p>
-        </SectionReveal>
+    <section id="about" className="relative bg-ink text-paper">
+      {/* Top metadata strip */}
+      <div className="grid grid-cols-12 gap-x-4 border-b border-paper/15 px-5 py-4 font-mono text-[10px] uppercase tracking-[0.22em] text-paper/70 sm:px-6 md:px-10">
+        <span className="col-span-6 md:col-span-3">Index 003 — About</span>
+        <span className="hidden md:col-span-6 md:block text-center">A working method, not a methodology</span>
+        <span className="col-span-6 text-right md:col-span-3">FIDM · 2013 — 2015</span>
+      </div>
 
-        {/* — Magazine spread: portrait + prose + pull quote */}
-        <div className="mt-10 grid gap-10 md:grid-cols-12 md:gap-x-10">
-          {/* Portrait — stretches across 5 cols */}
-          <div ref={portraitRef} className="md:col-span-5 md:min-h-[140vh]">
-            <div className="relative overflow-hidden bg-cream-2">
-              <motion.img
-                src="/images/about/brendon-portrait.webp"
-                alt="Brendon Carbullido — Art Director"
-                className="block w-full"
-                style={{ y: portraitY }}
-              />
-            </div>
-            <p className="mt-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.16em] text-ink-light">
-              <span>Brendon Carbullido</span>
-              <span>Los Angeles, CA</span>
-            </p>
-          </div>
-
-          {/* Prose — 6 cols, offset by 1 */}
-          <div className="md:col-span-6 md:col-start-7 md:self-start">
-            <div className="flex flex-col gap-10 md:sticky md:top-[15vh] lg:top-[18vh]">
-              <SplitReveal
-                as="h2"
-                className="font-serif text-[clamp(2.5rem,6vw,6rem)] font-light italic leading-[0.92] tracking-[-0.025em] text-ink"
-                stagger={0.1}
-              >
-                {[
-                  <span key="l1">A full creative</span>,
-                  <span key="l2">department.</span>,
-                  <span key="l3" className="not-italic text-ink-light">One person.</span>,
-                ]}
-              </SplitReveal>
-
-              <motion.div
-                className="flex max-w-[44ch] flex-col gap-6 font-serif text-[clamp(1.0625rem,1.35vw,1.3rem)] font-light leading-[1.55] text-ink"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.9, ease, delay: 0.15 }}
-              >
-                <p>
-                  <span className="float-left mr-2 mt-[0.2em] font-serif text-[2.75rem] font-light italic leading-[0.75] text-accent sm:text-[3.25rem] md:text-[3.75rem]">
-                    I
-                  </span>
-                  &apos;m an Art Director and Creative Director based in Los Angeles with
-                  seven-plus years building brands that perform. I shoot, direct, edit,
-                  and ship — strategy and execution in the same hand.
-                </p>
-                <p>
-                  I&apos;ve directed across agency, in-house, and independent contexts —
-                  fashion, luxury spirits, CPG, beauty, wellness, jewelry, celebrity.
-                  The thread is full creative ownership.
-                </p>
-                <p>
-                  My work spans celebrity shoots and recipe videos, brand launches and packaging systems,
-                  social ecosystems and campaign rollouts. Whatever the format, the standard stays the same.
-                </p>
-              </motion.div>
-
-              {/* Pull quote */}
-              <motion.blockquote
-                className="relative border-l border-ink/20 pl-6 font-serif text-[clamp(1.5rem,2.4vw,2.25rem)] font-light italic leading-[1.25] tracking-[-0.01em] text-ink"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.9, ease, delay: 0.2 }}
-              >
-                &ldquo;I don&apos;t guess — I learn before I create.&rdquo;
-              </motion.blockquote>
-            </div>
-          </div>
+      <div className="relative px-5 py-20 sm:px-6 sm:py-28 md:px-10 md:py-36">
+        {/* Mobile-only watercolor accent — single soft signal-blue blur behind
+            the manifesto headline, static (no scroll motion). Hidden on desktop
+            so the existing composition is preserved. */}
+        <div aria-hidden className="pointer-events-none absolute left-1/2 top-20 -z-0 -translate-x-1/2 md:hidden">
+          <div className="h-72 w-72 rounded-full bg-signal/35 blur-3xl" />
         </div>
+        <div className="relative z-10 grid grid-cols-12 gap-x-4 gap-y-12">
+          {/* Manifesto headline — condensed to two lines, mid-size */}
+          <h2 className="col-span-12 text-[clamp(1.75rem,4.2vw,4.25rem)] font-extrabold uppercase leading-[0.96] tracking-[-0.025em] text-paper md:col-span-10">
+            I build the story a customer walks into
+            <br />
+            <span className="text-paper/55">before they touch a single garment.</span>
+          </h2>
 
-        {/* Stats row — full width, hairline top, generous gap */}
-        <div
-          ref={statsRef}
-          className="mt-20 grid grid-cols-2 gap-x-8 gap-y-10 border-t border-ink/15 pt-14 md:grid-cols-4 md:mt-28"
-        >
-          {STATS.map((s) => (
-            <StatCounter key={s.label} end={s.end} suffix={s.suffix} label={s.label} enabled={statsInView} />
-          ))}
+          {/* Body + image */}
+          <div className="col-span-12 mt-10 grid grid-cols-12 gap-x-4 gap-y-10 border-t border-paper/15 pt-12 md:mt-16">
+            {/* Side image — native ratio, no frame */}
+            <div className="col-span-12 md:col-span-5">
+              <LightboxImage
+                src={image('work/kith-west-hollywood-still-7.webp')}
+                group="about"
+                alt="Visual merchandising — flagship floor"
+                loading="lazy"
+                decoding="async"
+                className="block h-auto w-full"
+              />
+              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-paper/60">
+                Fig. 01 — Kith W.H., 2024
+              </p>
+            </div>
+
+            {/* Body prose — two short blocks */}
+            <div className="col-span-12 grid grid-cols-1 gap-8 md:col-span-6 md:col-start-7 md:grid-cols-2 md:gap-10">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/60">
+                  001 — Foundation
+                </p>
+                <p className="mt-4 text-[14px] font-medium leading-[1.6] text-paper md:text-[15px]">
+                  Trained at FIDM in Visual Communications. Stewarded the
+                  original Kith Sunset — the first West Coast Kith — through
+                  countless seasonal floorsets, collection launches, an NBA
+                  All-Star weekend activation, and the slow patient work of
+                  training a four-person team to a single brand standard.
+                </p>
+              </div>
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/60">
+                  002 — Range
+                </p>
+                <p className="mt-4 text-[14px] font-medium leading-[1.6] text-paper md:text-[15px]">
+                  Nordstrom Thousand Oaks pulled me into a full-store remodel,
+                  scaling from women&apos;s apparel into beauty, men&apos;s, shoes,
+                  handbags, kids&apos;, and home. Most recently, the opening of
+                  Kith&apos;s new West Hollywood flagship — a $20M multi-level
+                  redevelopment spanning men&apos;s, women&apos;s, kids&apos;, footwear,
+                  hospitality, and wellness.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Numerical strip */}
+          <div className="col-span-12 mt-8 grid grid-cols-2 gap-y-10 border-t border-paper/15 pt-12 md:grid-cols-4">
+            <Stat value="03" label="Flagships" />
+            <Stat value="$20M" label="Flagship redevelopment" />
+            <Stat value="04" label="Assistants trained" />
+            <Stat value="12+" label="Departments covered" />
+          </div>
         </div>
       </div>
     </section>
+  )
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <p className="text-[clamp(2.5rem,5vw,4.5rem)] font-extrabold leading-none tracking-[-0.03em] text-paper">
+        {value}
+      </p>
+      <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-paper/65">
+        {label}
+      </p>
+    </div>
   )
 }

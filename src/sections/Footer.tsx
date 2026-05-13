@@ -1,88 +1,37 @@
-import { motion } from 'framer-motion'
-import { Magnetic } from '@/components/motion/Magnetic'
-
+/**
+ * Footer — one strip. Mark · index · copyright. No giant email reprise (Contact
+ * already does that work). No socials.
+ */
 export function Footer() {
   return (
-    <footer className="relative border-t border-[color:var(--rule)] bg-cream px-5 py-14 text-ink sm:px-6 sm:py-16 md:px-10 md:py-20">
-      <div className="mx-auto max-w-[120rem]">
-        <Magnetic strength={0.12} padding={120} className="block">
-        <motion.a
-          href="mailto:contact@createdbybc.com"
-          data-cursor="Email"
-          className="group block cursor-pointer"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.9, ease: [0.19, 1, 0.22, 1] }}
-        >
-          {/* Desktop: full email on one line */}
-          <span className="hidden font-serif text-[clamp(3.5rem,11vw,12rem)] font-light italic leading-[0.88] tracking-[-0.03em] text-ink transition-colors duration-500 group-hover:text-accent sm:block">
-            contact
-            <span className="text-accent group-hover:text-ink">@</span>
-            createdbybc.com
+    <footer className="relative border-t border-rule bg-paper text-ink">
+      {/* Mobile: 2 rows — [mark | index nav], then [© + email]. Desktop: 3 cols. */}
+      <div className="grid grid-cols-12 gap-x-4 gap-y-6 px-5 py-8 sm:px-6 md:gap-y-0 md:px-10 md:py-10">
+        <div className="col-span-6 flex flex-col gap-2 md:col-span-4">
+          <span className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-ink">
+            <span className="inline-block h-2 w-2 rounded-full bg-signal" aria-hidden />
+            Geordin Zolliecoffer
           </span>
-          {/* Mobile: stacked for readability */}
-          <span className="block font-serif text-[clamp(2.5rem,13vw,4rem)] font-light italic leading-[0.92] tracking-[-0.025em] text-ink transition-colors duration-500 group-hover:text-accent sm:hidden">
-            contact
-            <br />
-            <span className="text-accent group-hover:text-ink">@</span>
-            createdbybc
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft md:inline">
+            Visual Merchandising · Los Angeles
           </span>
-          <span className="mt-4 block font-mono text-[10px] uppercase tracking-[0.18em] text-ink-light">
-            Get in touch ↗
-          </span>
-        </motion.a>
-        </Magnetic>
-
-        <div className="mt-16 grid gap-8 border-t border-ink/15 pt-10 md:grid-cols-12">
-          <div className="md:col-span-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-light">Studio</p>
-            <p className="mt-3 font-serif text-[clamp(1.375rem,1.75vw,1.75rem)] font-light italic text-ink">
-              Los Angeles, CA
-            </p>
-          </div>
-
-          <nav className="md:col-span-4" aria-label="Footer navigation">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-light">Index</p>
-            <ul className="mt-3 flex flex-col gap-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink">
-              <li><a className="cursor-pointer transition-colors duration-300 hover:text-accent" href="/work">Work</a></li>
-              <li><a className="cursor-pointer transition-colors duration-300 hover:text-accent" href="/about">About</a></li>
-              <li><a className="cursor-pointer transition-colors duration-300 hover:text-accent" href="/resume">Résumé</a></li>
-              <li><a className="cursor-pointer transition-colors duration-300 hover:text-accent" href="/contact">Contact</a></li>
-            </ul>
-          </nav>
-
-          <div className="md:col-span-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-light">Elsewhere</p>
-            <ul className="mt-3 flex flex-col gap-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink">
-              <li>
-                <a
-                  href="https://www.instagram.com/brendon.carbullido"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="cursor-pointer transition-colors duration-300 hover:text-accent"
-                >
-                  Instagram ↗
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.linkedin.com/in/brendoncarbullido"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="cursor-pointer transition-colors duration-300 hover:text-accent"
-                >
-                  LinkedIn ↗
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
 
-        <p className="mt-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.16em] text-ink-light">
-          <span>© 2026 Brendon Carbullido</span>
-          <span>Art · Creative · Brand</span>
-        </p>
+        <nav className="col-span-6 md:col-span-4" aria-label="Footer navigation">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft">Index</p>
+          <ul className="mt-2 flex flex-col gap-1 font-mono text-[11px] uppercase tracking-[0.18em] text-ink">
+            <li><a className="transition-colors hover:text-signal" href="/work">Work</a></li>
+            <li><a className="transition-colors hover:text-signal" href="/about">About</a></li>
+            <li><a className="transition-colors hover:text-signal" href="/contact">Contact</a></li>
+          </ul>
+        </nav>
+
+        <div className="col-span-12 border-t border-rule pt-6 md:col-span-4 md:border-t-0 md:pt-0 md:text-right">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-soft">© 2026</p>
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink">
+            hello@geordinzolliecoffer.com
+          </p>
+        </div>
       </div>
     </footer>
   )
